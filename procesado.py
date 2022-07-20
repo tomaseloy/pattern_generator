@@ -315,17 +315,6 @@ listaPatrones = []
 
 def identificadorPatrones(lista_tweets):
     # identificar patrones
-    # 1. palabras claves
-    # 2. fecha
-    # 3. localizacion
-    # 4. conector
-    # 5. cuenta
-    # 6. palabras claves y fecha
-    # 7. palabras claves y localizacion
-    # 8. palabras claves y conector
-    # 9. fecha y localizacion
-    # 10. fecha y conector
-    # 11. localizacion y conector
     # 12. palabras claves, fecha y localizacion
     # 13. palabras claves, fecha y conector
     # 14. palabras claves, localizacion y conector
@@ -335,17 +324,7 @@ def identificadorPatrones(lista_tweets):
     # 18. palabras claves, cuenta y fecha
     # 19. palabras claves, cuenta y localizacion
     # 20. palabras claves, cuenta y conector
-    # 21. palabras claves, fecha, cuenta
-    # 22. palabras claves, fecha, cuenta y localizacion
-    # 23. palabras claves, fecha, cuenta y conector
-    # 24. palabras claves, localizacion, cuenta
-    # 25. palabras claves, localizacion, cuenta y fecha
-    # 26. palabras claves, localizacion, cuenta y conector
-    # 27. palabras claves, fecha, localizacion, cuenta
-    # 28. palabras claves, fecha, localizacion, cuenta y conector
-    # 29. palabras claves, fecha, localizacion, cuenta y conector
-    # 30. palabras claves, localizacion, cuenta, fecha y conector
-    # 31. palabras claves, cuenta, fecha, localizacion y conector
+
     for tweet in tweetLocalizadosConFecha:
         if(re.search("en", tweet) and re.search(fecha, tweet) and re.search(localizaciones, tweet)):
             print("Identificado patron tipo 1")
