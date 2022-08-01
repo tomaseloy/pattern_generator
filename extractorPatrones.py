@@ -1,11 +1,12 @@
-from asyncio.proactor_events import _ProactorSocketTransport
-from cgi import print_directory
-from operator import indexOf
-import re
-import spacy
-import dateutil.parser as dparser
-from datetime import datetime
 from dateutil.relativedelta import *
+from datetime import datetime
+import dateutil.parser as dparser
+import spacy
+import re
+from operator import indexOf
+from cgi import print_directory
+from asyncio.proactor_events import _ProactorSocketTransport
+import os
 
 
 class Tweet:
@@ -39,6 +40,15 @@ class Tweet:
         self.link = link
         self.lugar_evento = lugar_evento
         self.fecha_evento = fecha_evento
+
+
+class Patron:
+    def __init__(self, patron_completo, patron_recortado, puntuacion, tweet_ejemplo1, tweet_ejemplo2):
+        self.patron_completo = patron_completo
+        self.patron_recortado = patron_recortado
+        self.puntuacion = puntuacion
+        self.tweet_ejemplo1 = tweet_ejemplo1
+        self.tweet_ejemplo2 = tweet_ejemplo2
 
 
 def pertenece(autor, tweet):
@@ -92,7 +102,7 @@ def preprocesamiento(tweet):
     # Eliminate duplicate whitespaces using wildcards
     tweet = re.sub(r'\s+', ' ', tweet)
     # elimina caracteres especiales
-    tweet = re.sub("\[|\]|\@|\#|\?|\¿|\¡|\!|\|", "", tweet)
+    tweet = re.sub("\[|\]|\@|\#|\?|\¿|\¡|\!|\||\(|\)", "", tweet)
     tweet = re.sub(r'http\S+', '', tweet)   # elimina url
     # tweet = tweet.lower()  # pasa a minusculas
     return tweet
@@ -105,21 +115,39 @@ def detector_patron(patrones, texto):
         return False
 
 
+def descarte_posiciones(palabras):
+    count = 0
+    for palabra in palabras:
+        count = count+1
+        try:
+            if(palabras.index(palabra) != palabras.index("@EVENTO@") and palabras.index(palabra) != palabras.index("@EVENTO@")-1 and palabras.index(palabra) != palabras.index("@FECHA@") and palabras.index(palabra) != palabras.index("@FECHA@")-1 and palabras.index(palabra) != palabras.index("@LOCALIZACION@") and palabras.index(palabra) != palabras.index("@LOCALIZACION@")-1):
+                palabras.pop(palabras.index(palabra))
+                break
+        except Exception:
+            return None
+    if(count < len(palabras)):
+        descarte_posiciones(palabras)
+    return palabras
+
+
 comunidades_autonomas = ["Andalucía", "Aragón", "Islas Baleares", "Canarias", "Cantabria", "Castilla-La Mancha", "Castilla y León", "Cataluña", "Comunidad de Madrid",
                          "Comunidad Foral de Navarra", "Comunidad Valenciana", "Extremadura", "Galicia", "País Vasco", "Principado de Asturias", "Región de Murcia", "La Rioja"]
 
 provincias = ["A Coruña", "Alava", "Albacete", "Alicante", "Almería", "Asturias", "Avila", "Badajoz", "Barcelona", "Burgos", "Cáceres", "Cádiz", "Cantabria", "Castellón", "Ceuta", "Ciudad Real", "Córdoba", "Cuenca", "Formentera", "Girona", "Granada", "Guadalajara", "Guipuzcoa", "Huelva", "Huesca", "Ibiza", "Jaén", "La Rioja", "Las Palmas de Gran Canaria", "Gran Canaria",
               "Fuerteventura", "Lanzarote", "León", "Lérida", "Lugo", "Madrid", "Málaga", "Mallorca", "Menorca", "Murcia", "Navarra", "Orense", "Palencia", "Pontevedra", "Salamanca", "Santa Cruz de Tenerife", "Tenerife", "La Gomera", "La Palma", "El Hierro", "Segovia", "Sevilla", "Soria", "Tarragona", "Teruel", "Toledo", "Valencia", "Valladolid", "Vizcaya", "Zamora", "Zaragoza"]
 
-palabras_clave = ["partido", "encuentro", "manifestación",
-                  "concentración", "obras", "obra", "concierto", "espectáculo", "presentación"]
+palabras_clave = ["partidos", "partido", "encuentros", "encuentro", "manifestaciones", "manifestación",
+                  "concentración", "obras", "obra", "conciertos", "concierto", "espectáculos", "espectáculo", "presentaciones", "presentación"]
+
+fechas = ["hoy", "mañana", "pasado mañana",
+          "próxima semana", "siguiente semana", "mes", "año", "fin de semana"]
 contador = 0
 lista_tweets = []
 lista_tweets_cortada = []
 filtrados = []
 descartados = []
 
-with open("tweets/AytoLeganes_tweets.txt", encoding="utf8") as tweets_txt:
+with open("tweets/Kivents1_tweets.txt", encoding="utf8") as tweets_txt:
     # pasamos los tweets a una lista
     for linea in tweets_txt:
         data = linea.split('\t')
@@ -160,55 +188,54 @@ for tweet in no_RT_lista:
 # usar https: // spacy.io /, soporte para gallego: http: // nlp.lsi.upc.edu/freeling/
 
 nlp = spacy.load("es_core_news_sm")
-nlp2 = spacy.load("es_core_news_lg")
-
-nlpEN = spacy.load("en_core_web_sm")
+# nlp2 = spacy.load("es_core_news_lg")
+# nlpEN = spacy.load("en_core_web_sm")
 
 tweet_sust_loc = []
 tweet_sust_eve = []
 tweet_sust = []
-# doc = nlp("Yo estoy probando que coje que estoy en el museo del Prado o en el Santiago Bernabéu")
-# frase = ""
-# for ent in doc.ents:
-#     print(ent.text, ent.label_)
 
 for tweet in no_RT_lista:
     doc = nlp(tweet.text)
 
-    print("********************************************")
-    print(tweet.text)
-    # Part-of-speech tags and dependencies
-    for token in doc:
-        # Text: The original word text.
-        # Lemma: The base form of the word.
-        # POS: The simple UPOS part-of-speech tag.
-        # ADJ: adjective
-        # ADP: adposition
-        # ADV: adverb
-        # AUX: auxiliary
-        # CCONJ: coordinating conjunction
-        # DET: determiner
-        # INTJ: interjection
-        # NOUN: noun
-        # NUM: numeral
-        # PART: particle
-        # PRON: pronoun
-        # PROPN: proper noun
-        # PUNCT: punctuation
-        # SCONJ: subordinating conjunction
-        # SYM: symbol
-        # VERB: verb
-        # X: other
-        # Tag: The detailed part-of-speech tag.
-        # Dep: Syntactic dependency, i.e. the relation between tokens.
-        # Shape: The word shape – capitalization, punctuation, digits.
-        # is alpha: Is the token an alpha character?
-        # is stop: Is the token part of a stop list, i.e. the most common words of the language?
+    # print("********************************************")
+    # print(tweet.text)
+    # # Part-of-speech tags and dependencies
+    # for token in doc:
+    #     # Text: The original word text.
+    #     # Lemma: The base form of the word.
+    #     # POS: The simple UPOS part-of-speech tag.
+    #     # ADJ: adjective
+    #     # ADP: adposition
+    #     # ADV: adverb
+    #     # AUX: auxiliary
+    #     # CCONJ: coordinating conjunction
+    #     # DET: determiner
+    #     # INTJ: interjection
+    #     # NOUN: noun
+    #     # NUM: numeral
+    #     # PART: particle
+    #     # PRON: pronoun
+    #     # PROPN: proper noun
+    #     # PUNCT: punctuation
+    #     # SCONJ: subordinating conjunction
+    #     # SYM: symbol
+    #     # VERB: verb
+    #     # X: other
+    #     # Tag: The detailed part-of-speech tag.
+    #     # Dep: Syntactic dependency, i.e. the relation between tokens.
+    #     # Shape: The word shape – capitalization, punctuation, digits.
+    #     # is alpha: Is the token an alpha character?
+    #     # is stop: Is the token part of a stop list, i.e. the most common words of the language?
 
-        print(token.text, token.pos_, token.dep_)
+    #     # Aplicar una lematizacion para los verbos
+    #     if(token.pos_ == "VERB"):
+    #         # print(token.text, token.pos_, token.dep_,
+    #         #       token.lemma_)
+    #         tweet.text = re.sub(token.text, "@"+token.lemma_, tweet.text)
+    #         # print("********************************************")
 
-        print("********************************************")
-        # # detector de entidades con nombre
+    # # detector de entidades con nombre
     for ent in doc.ents:
         # print(ent.text, ent.label_)
 
@@ -224,13 +251,9 @@ for tweet in tweet_sust_loc:
     tweet_sust_eve.append(tweet)
     # print(tweet)
 
-fechas = ["hoy", "mañana", "pasado mañana",
-          "próxima semana", "siguiente semana", "mes", "año", "fin de semana"]
-
-
-# patron que recoge cualquier palabra de mas de 3 caracteres despues de un numero, nos quedamos solo con una fecha
+# patron que recoge cualquier palabra de mas de 3 caracteres despues de un numero, nos quedamos solo con una fecha (los espacios en blanco presentes son importantes)
 regex = re.compile(
-    '(?:(\d{1,2}).[de]{2} ([ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic]{3})[a-z]*|([a-z]{3})[a-z]* (\d{1,2}))', re.I)
+    '(?:(\d{1,2}).[de]{2} ([ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic]{3})[a-z]*|([a-z] {3})[a-z]* (\d{1,2}))', re.I)
 
 for tweet in tweet_sust_eve:
     for x in regex.findall(tweet):
@@ -289,21 +312,16 @@ for tweet in tweet_sust:
     else:
         lista_tweets_incomp.append(tweet)
 
-# print(len(lista_tweets_sustituidos))
+print(len(lista_tweets_sustituidos))
 
 # for tweet in lista_tweets_sustituidos:
 #     print("")
 #     print(tweet)
 
-# ****************************************************Aplicar una lematizacion aqui puede estar bien, principalmente para los verbos**********************************************************************************
-
-# PATRONES (los tweets relevantes = 1, el resto = 0)
-
-# Patrones semilla? {jugar,tocar,ver,actuar,cantar} se pueden autoañadir nuesvas palabras cercanas encontradas
-# # semilla en principio nos da un poco igual, podrian ser las palabras clave del principio
-
 # @EVENTO@ el @FECHA@ en @LOCALIZACION@" -> añadir el verbo será importante seguramente
 
+lista_final_patrones = []
+lista_patrones_seleccionados = []
 lista_patrones = []
 
 # PATRON POR TAMAÑO VENTANA? {palabras colindantes con los datos relevantes} -> patron1: @VERBO_JUGAR@ un @EVENTO@ el @FECHA@ en @LOCALIZACION@
@@ -313,27 +331,13 @@ for tweet in lista_tweets_sustituidos:
     palabras = tweet.split(" ")
     # print(tweet)
 
-    def descarte_posiciones(palabras):
-        count = 0
-        for palabra in palabras:
-            count = count+1
-            try:
-                if(palabras.index(palabra) != palabras.index("@EVENTO@") and palabras.index(palabra) != palabras.index("@EVENTO@")-1 and palabras.index(palabra) != palabras.index("@FECHA@") and palabras.index(palabra) != palabras.index("@FECHA@")-1 and palabras.index(palabra) != palabras.index("@LOCALIZACION@") and palabras.index(palabra) != palabras.index("@LOCALIZACION@")-1):
-                    palabras.pop(palabras.index(palabra))
-                    break
-            except Exception:
-                return None
-        if(count < len(palabras)):
-            descarte_posiciones(palabras)
-        return palabras
-
     palabras_patron = descarte_posiciones(palabras)
     if(palabras_patron != None):
         patron = " ".join(palabras_patron)
         lista_patrones.append(patron)
+
         # print(patron)
         # print("**************")
-
 
 # quitamos los @ de los patrones
 patron_recorte = []
@@ -343,27 +347,33 @@ for patron in lista_patrones:
     patron_rec = re.sub("@LOCALIZACION@", "", patron_rec)
     patron_rec = patron_rec.split()
     patron_recorte.append(patron_rec)
+    lista_final_patrones.append(Patron(patron, patron_rec, None, None, None))
     # print(patron_rec)
 
-
 # seleccionamos los mas relevantes (PATRONES CANDIDATOS)-> mediante formula
-for patron in patron_recorte:
-    # print(patron)
+for patron in lista_final_patrones:
+    # print("")
+    # print(patron.patron_recortado)
+    # print(patron.patron_completo)
     cant_tweets_rel = 0
     cant_tweets_tot = 0
     for tweet in lista_tweets_sustituidos:
         tweet_incluido_rel = True
-        for palabra in patron:
+        for palabra in patron.patron_recortado:
             if(" "+palabra+" " not in tweet):
                 tweet_incluido_rel = False
                 break
         if(tweet_incluido_rel):
             # print(tweet)
             cant_tweets_rel = cant_tweets_rel+1
+            if(patron.tweet_ejemplo1 == None):
+                patron.tweet_ejemplo1 = tweet
+            elif(patron.tweet_ejemplo2 == None):
+                patron.tweet_ejemplo2 = tweet
 
     for tweet in lista_tweets:
         tweet_incluido = True
-        for palabra in patron:
+        for palabra in patron.patron_recortado:
             if(" "+palabra+" " not in tweet.text):
                 tweet_incluido = False
                 break
@@ -379,6 +389,41 @@ for patron in patron_recorte:
     except Exception:
         res = 0
 
+    patron.puntuacion = res
+
     # print("PUNTUACION TOTAL:", cant_tweets_tot,
     #       "PUNTUACION RELEVANTE:", cant_tweets_rel)
     # print("PUNTUACION MEDIA:", res)
+
+lista_final_patrones.sort(key=lambda x: x.puntuacion, reverse=True)
+
+# # Validación por parte del usuario
+for patron in lista_final_patrones:
+    if(patron.puntuacion > 0):
+        print("")
+        print("Patron: ", patron.patron_completo)
+        print(" - Puntuacion: ", patron.puntuacion)
+        print(" - Tweet ejemplo 1: ", patron.tweet_ejemplo1)
+        print(" - Tweet ejemplo 2: ", patron.tweet_ejemplo2)
+
+        print("Si considera que el patrón es válido inserte la letra -s- , en caso negativo inserte -n-")
+        validacion = input()
+        if(validacion == "s"):
+            print("Patrón agregado")
+            lista_patrones_seleccionados.append(patron)
+        elif(validacion == "n"):
+            print("Patrón descartado")
+        else:
+            print("TECLA EQUIVOCADA, Por favor, escriba -s- o -n-")
+
+print("Los patrones finales son: ")
+for patron in lista_patrones_seleccionados:
+    print("Patron: ", patron.patron_completo)
+
+# escribir patrones en un fichero .txt
+file = open("c:/Users/Tomy/Desktop/tfg/patrones.txt", "w")
+for patron in lista_patrones_seleccionados:
+    patron_str = " ".join(patron.patron_recortado)
+    file.write(patron_str + os.linesep)
+file.close()
+print("Patrones almacenados en patrones.txt")
