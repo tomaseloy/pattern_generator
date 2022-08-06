@@ -51,22 +51,10 @@ class Patron:
         self.tweet_ejemplo2 = tweet_ejemplo2
 
 
-def pertenece(autor, tweet):
-    if(autor in tweet):
-        return True
-    return False
-
-
 def filtro_palabras_clave(frase, palabras):
     for palabra in palabras:
         if palabra in frase:
             return True
-    return False
-
-
-def filtro_combinacion_palabras(frase, palabra):
-    if palabra in frase:
-        return True
     return False
 
 
@@ -108,13 +96,6 @@ def preprocesamiento(tweet):
     return tweet
 
 
-def detector_patron(patrones, texto):
-    for patron in patrones:
-        if re.search(patron, texto):
-            return True
-        return False
-
-
 def descarte_posiciones(palabras):
     count = 0
     for palabra in palabras:
@@ -139,15 +120,18 @@ provincias = ["A Coruña", "Alava", "Albacete", "Alicante", "Almería", "Asturia
 palabras_clave = ["partidos", "partido", "encuentros", "encuentro", "manifestaciones", "manifestación",
                   "concentración", "obras", "obra", "conciertos", "concierto", "espectáculos", "espectáculo", "presentaciones", "presentación"]
 
-fechas = ["hoy", "mañana", "pasado mañana",
-          "próxima semana", "siguiente semana", "mes", "año", "fin de semana"]
+fechas = ["hoy", "mañana", "pasado mañana"]
+
+dias_semana = ["lunes", "martes", "miércoles",
+               "jueves", "viernes", "sábado", "domingo"]
+
 contador = 0
 lista_tweets = []
 lista_tweets_cortada = []
 filtrados = []
 descartados = []
 
-with open("tweets/Kivents1_tweets.txt", encoding="utf8") as tweets_txt:
+with open("tweets/AytoLeganes_tweets.txt", encoding="utf8") as tweets_txt:
     # pasamos los tweets a una lista
     for linea in tweets_txt:
         data = linea.split('\t')
@@ -253,9 +237,16 @@ for tweet in tweet_sust_loc:
 
 # patron que recoge cualquier palabra de mas de 3 caracteres despues de un numero, nos quedamos solo con una fecha (los espacios en blanco presentes son importantes)
 regex = re.compile(
-    '(?:(\d{1,2}).[de]{2} ([ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic]{3})[a-z]*|([a-z] {3})[a-z]* (\d{1,2}))', re.I)
+    '(\d{1,2}).[de]{2} ([ene|feb|mar|abr|may|jun|jul|ago|sep|oct|nov|dic]{3})[a-z]*|([a-z]{3})[a-z]*(\d{1,2})', re.I)
 
 for tweet in tweet_sust_eve:
+    # quitamos palabras innecesarias para el patron
+    for palabra in dias_semana:
+        if palabra in tweet:
+            tweet = re.sub(" "+palabra, "",
+                           tweet)
+
+    # identificamos fechas
     for x in regex.findall(tweet):
         mes = ""
         if x[0] == '':
@@ -312,19 +303,18 @@ for tweet in tweet_sust:
     else:
         lista_tweets_incomp.append(tweet)
 
-print(len(lista_tweets_sustituidos))
+# print(len(lista_tweets_sustituidos))
 
 # for tweet in lista_tweets_sustituidos:
 #     print("")
 #     print(tweet)
 
-# @EVENTO@ el @FECHA@ en @LOCALIZACION@" -> añadir el verbo será importante seguramente
 
 lista_final_patrones = []
 lista_patrones_seleccionados = []
 lista_patrones = []
 
-# PATRON POR TAMAÑO VENTANA? {palabras colindantes con los datos relevantes} -> patron1: @VERBO_JUGAR@ un @EVENTO@ el @FECHA@ en @LOCALIZACION@
+# PATRON POR TAMAÑO VENTANA? {palabras colindantes con los datos relevantes}
 for tweet in lista_tweets_sustituidos:
     patron = ""
     lista_index = []
@@ -394,6 +384,8 @@ for patron in lista_final_patrones:
     # print("PUNTUACION TOTAL:", cant_tweets_tot,
     #       "PUNTUACION RELEVANTE:", cant_tweets_rel)
     # print("PUNTUACION MEDIA:", res)
+
+print(len(lista_final_patrones))
 
 lista_final_patrones.sort(key=lambda x: x.puntuacion, reverse=True)
 
