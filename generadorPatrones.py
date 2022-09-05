@@ -131,7 +131,7 @@ lista_tweets_cortada = []
 filtrados = []
 descartados = []
 
-with open("tweets/AytoLeganes_tweets.txt", encoding="utf8") as tweets_txt:
+with open("tweets/suenosmusicales_tweets.txt", encoding="utf8") as tweets_txt:
     # pasamos los tweets a una lista
     for linea in tweets_txt:
         data = linea.split('\t')
@@ -146,6 +146,7 @@ lista_tweets = lista_tweets[1:1001]
 for tweet in lista_tweets:
     if filtro_palabras_clave(tweet.text, palabras_clave):
         filtrados.append(tweet)
+        # print("")
         # print(tweet.text)
     else:
         descartados.append(tweet)
@@ -165,6 +166,8 @@ for tweet in filtrados:
 # Eliminamos en cada tweet corchetes, los símbolos @ y #, símbolos de exclamación e interrogación, emoticonos y URLs.
 
 for tweet in no_RT_lista:
+    # print("")
+    # print(tweet.text)
     tweet.text = preprocesamiento(tweet.text)
     # print("")
     # print(tweet.text)
@@ -179,10 +182,11 @@ tweet_sust_loc = []
 tweet_sust_eve = []
 tweet_sust = []
 
+# print(len(no_RT_lista))
 for tweet in no_RT_lista:
     doc = nlp(tweet.text)
 
-    # print("********************************************")
+    # print(" ")
     # print(tweet.text)
     # # Part-of-speech tags and dependencies
     # for token in doc:
@@ -342,9 +346,9 @@ for patron in lista_patrones:
 
 # seleccionamos los mas relevantes (PATRONES CANDIDATOS)-> mediante formula
 for patron in lista_final_patrones:
-    # print("")
+    print("")
     # print(patron.patron_recortado)
-    # print(patron.patron_completo)
+    print(patron.patron_completo)
     cant_tweets_rel = 0
     cant_tweets_tot = 0
     for tweet in lista_tweets_sustituidos:
@@ -354,7 +358,7 @@ for patron in lista_final_patrones:
                 tweet_incluido_rel = False
                 break
         if(tweet_incluido_rel):
-            # print(tweet)
+            print(tweet)
             cant_tweets_rel = cant_tweets_rel+1
             if(patron.tweet_ejemplo1 == None):
                 patron.tweet_ejemplo1 = tweet
@@ -381,22 +385,22 @@ for patron in lista_final_patrones:
 
     patron.puntuacion = res
 
-    # print("PUNTUACION TOTAL:", cant_tweets_tot,
-    #       "PUNTUACION RELEVANTE:", cant_tweets_rel)
-    # print("PUNTUACION MEDIA:", res)
+    print("PUNTUACION TOTAL:", cant_tweets_tot,
+          "PUNTUACION RELEVANTE:", cant_tweets_rel)
+    print("PUNTUACION MEDIA:", res)
 
-print(len(lista_final_patrones))
+# print(len(lista_final_patrones))
 
 lista_final_patrones.sort(key=lambda x: x.puntuacion, reverse=True)
 
-# # Validación por parte del usuario
+# Validación por parte del usuario
 for patron in lista_final_patrones:
     if(patron.puntuacion > 0):
         print("")
         print("Patron: ", patron.patron_completo)
         print(" - Puntuacion: ", patron.puntuacion)
         print(" - Tweet ejemplo 1: ", patron.tweet_ejemplo1)
-        print(" - Tweet ejemplo 2: ", patron.tweet_ejemplo2)
+        # print(" - Tweet ejemplo 2: ", patron.tweet_ejemplo2)
 
         print("Si considera que el patrón es válido inserte la letra -s- , en caso negativo inserte -n-")
         validacion = input()
@@ -415,7 +419,7 @@ for patron in lista_patrones_seleccionados:
 # escribir patrones en un fichero .txt
 file = open("c:/Users/Tomy/Desktop/tfg/patrones.txt", "w")
 for patron in lista_patrones_seleccionados:
-    patron_str = " ".join(patron.patron_recortado)
+    patron_str = "".join(patron.patron_completo)
     file.write(patron_str + os.linesep)
 file.close()
 print("Patrones almacenados en patrones.txt")
