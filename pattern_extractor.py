@@ -1,6 +1,6 @@
 # Fichero: pattern_extractor.py
 # Autor: Tomás Eloy Suárez Martínez
-# Descripción: Funciones para generar los patrones de una cuenta
+# Descripción: Genera los patrones de una cuenta a partir de sus últimos tweets
 
 import spacy
 import re

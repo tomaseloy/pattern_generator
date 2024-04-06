@@ -1,8 +1,7 @@
 # Fichero: select_by_pattern.py
 # Autor: Tomás Eloy Suárez Martínez
-# Descripción: Funciones para filtrar los tweets que publican las cuentas a las que se hace seguimiento
-# Si un tweet encaja con alguno de los patrones seleccionados para la propia cuenta anteriormente,
-# se genera un JSON con los datos del evento mencionado en el tweet
+# Descripción: Filtra los tweet que publican las cuentas a las que se quiere hacer seguimiento.
+#  Si un tweet encaja con alguno de los patrones generados previamente para la propia cuenta, se muestra por pantalla la información del evento.
 
 import re
 import spacy
@@ -13,7 +12,7 @@ def tweet_filter(tweet, author):
     tweet_filter(tweet, author)
 
     Filtra los tweets que publican las cuentas a las que se hace seguimiento.
-    Si el tweet encaja con alguno de los patrones seleccionados para la propia cuenta previamente, se genera un JSON con los datos del evento mencionado en el tweet
+    Si un tweet encaja con alguno de los patrones generados previamente para la propia cuenta, se muestra por pantalla la información del evento.
 
     Parametros
     ----------
