@@ -1,0 +1,12 @@
+MODULOS REQUERIDOS
+
+//PIP
+sudo apt-get install python3-pip
+python3 -m pip install --upgrade pip
+
+//SPACY
+pip3 install -U spacy
+python3 -m spacy download es_core_news_sm
+
+//PYTHON
+Testeado con python 3.10.9 y versiones superiores
