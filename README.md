@@ -7,3 +7,6 @@ Filtra los tweet que publican las cuentas a las que se quiere hacer seguimiento.
 
 ## functions.py 
 Contiene funciones de utilidad para el proceso de extracción de patrones
+
+# Documentación completa
+https://deepwiki.com/tomaseloy/pattern_generator/3-tweet-filtering
